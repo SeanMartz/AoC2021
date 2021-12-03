@@ -5,7 +5,7 @@ open System.IO
 let rec CountIncreasesBetweenLines (data: int list) (count: int) : int =
     match data with
     | head :: tail ->
-        if tail.Length > 0 && head < tail.Head then
+        if not tail.IsEmpty && head < tail.Head then
             CountIncreasesBetweenLines tail (count + 1)
         else
             CountIncreasesBetweenLines tail count
@@ -15,8 +15,7 @@ let rec CountIncreasesBetweenLines (data: int list) (count: int) : int =
 // Define a function to construct a message to print
 [<EntryPoint>]
 let main argv =
-    let fullPath =
-        Path.Combine(__SOURCE_DIRECTORY__, "test.txt")
+    let fullPath = Path.Combine(__SOURCE_DIRECTORY__, "test.txt")
 
     let data = File.ReadLines(fullPath)
     let dataInt = data |> List.ofSeq |> List.map int
