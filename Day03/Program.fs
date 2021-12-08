@@ -21,7 +21,7 @@ let rec getColumnAverages (data: list<string>) (columnAverages: list<float>) : l
         columnAverages
 
 
-let calculateGamma data : string =
+let calculateMostCommonBit data : string =
     getColumnAverages data []
     |> List.map (fun avg -> if avg >= 0.5 then 1.0 else 0.0)
     |> List.map Convert.ToInt32
@@ -30,7 +30,7 @@ let calculateGamma data : string =
     |> String.concat ""
 
 
-let calculateEpsilon data : string =
+let calculateLeastCommonBit data : string =
     getColumnAverages data []
     |> List.map (fun avg -> if avg >= 0.5 then 0.0 else 1.0)
     |> List.map Convert.ToInt32
@@ -39,6 +39,28 @@ let calculateEpsilon data : string =
     |> String.concat ""
 
 
+let rec filterDataForMostCommonBitInColumn (data: list<string>) (commonBit: string) (position: int) : string =
+    if data.Length <> 1 then
+        let filteredData =
+            data
+            |> List.filter (fun binary -> binary.[position] = commonBit.[position])
+
+        let mostCommonBit = calculateMostCommonBit filteredData
+        filterDataForMostCommonBitInColumn filteredData mostCommonBit (position + 1)
+    else
+        data.Head
+
+let rec filterDataForLeastCommonBitInColumn (data: list<string>) (commonBit: string) (position: int) : string =
+    if data.Length <> 1 then
+        let filteredData =
+            data
+            |> List.filter (fun binary -> binary.[position] = commonBit.[position])
+
+        let leastCommonBit = calculateLeastCommonBit filteredData
+        filterDataForLeastCommonBitInColumn filteredData leastCommonBit (position + 1)
+    else
+        data.Head
+
 [<EntryPoint>]
 let main argv =
     let fullPath =
@@ -46,15 +68,19 @@ let main argv =
 
     let data = File.ReadLines(fullPath) |> List.ofSeq
 
-    let gamma = calculateGamma data
-    let epsilon = calculateEpsilon data
+    let gamma = calculateMostCommonBit data
+    let epsilon = calculateLeastCommonBit data
     let gammaNumber = Convert.ToInt32(gamma, 2)
     let epsilonNumber = Convert.ToInt32(epsilon, 2)
     let powerConsumption = gammaNumber * epsilonNumber
 
-    printfn $"Gamma Binary:  %s{gamma}"
-    printfn $"Gamma Base10: %d{gammaNumber}"
-    printfn $"Epsilon Binary:  %s{epsilon}"
-    printfn $"Epsilon Base10:  %d{epsilonNumber}"
     printfn $"Power Consumption:  %d{powerConsumption}"
+
+    let oxygen = filterDataForMostCommonBitInColumn data gamma 0
+    let co2 = filterDataForLeastCommonBitInColumn data epsilon 0
+    let oxygenNumber = Convert.ToInt32(oxygen, 2)
+    let co2Number = Convert.ToInt32(co2, 2)
+    let lifeSupportRating = oxygenNumber * co2Number
+
+    printfn $"LifeSupport Rating: %d{lifeSupportRating}"
     0 // return an integer exit code
