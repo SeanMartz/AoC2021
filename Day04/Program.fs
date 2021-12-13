@@ -9,6 +9,8 @@ type bingoBoard =
         new(rows) = { rows = rows }
     end
 
+type winningBoard = { board: bingoBoard; winningNumber: string }
+
 
 let rec parseRowsIntoBoards (bingoBoards: list<bingoBoard>) (data: list<string>) : List<bingoBoard> =
     match data with
@@ -69,18 +71,23 @@ let isWinningBoard (board: bingoBoard) : bool =
     let columnWin = checkForColumnWin board
     rowWin || columnWin
 
-
-let rec playGame calls boards : (bingoBoard * string) =
+let rec playGame calls boards (winningBoards: list<winningBoard>) : list<winningBoard> =
     match calls with
     | call :: upcomingCalls ->
-        let markedBoards = boards |> applyCall call
-        let winners = markedBoards |> List.filter isWinningBoard
-        match winners with
-        | head :: tail -> (head, call)
-        | _ -> playGame upcomingCalls markedBoards
+        let markedBoards = boards
+                           |> applyCall call
+                           
+        let winners : List<winningBoard> = winningBoards @ (markedBoards
+                                            |> List.filter isWinningBoard
+                                            |> List.map(fun b -> {board = b; winningNumber = call }))
+                        
+                        
+        let boardsToKeepPlaying = markedBoards |> List.filter (fun board -> not (isWinningBoard board))
+        playGame upcomingCalls boardsToKeepPlaying winners
+    | [] -> winningBoards
     | _ -> failwith "calls exhausted, no boards won."
 
-let sumUncalledNumbers (board: bingoBoard) : int =
+let sumUncalledNumbers (board: bingoBoard ) : int =
     board.rows
     |> List.concat
     |> List.filter (fun bn -> not bn.chosen)
@@ -106,9 +113,12 @@ let main argv =
         |> parseRowsIntoBoards [ bingoBoard ([]) ]
         |> List.rev
 
-    let winningBoard, winningNumber = playGame calls boards
-    let sum = sumUncalledNumbers winningBoard
-    let answer = sum * int (winningNumber)
+    let winningBoards = playGame calls boards []
+    let sum = sumUncalledNumbers winningBoards.Head.board
+    let answer = sum * int (winningBoards.Head.winningNumber)
+    let lastWinner = (List.rev winningBoards).Head
+    let partTwoAnswer = (sumUncalledNumbers lastWinner.board) * int lastWinner.winningNumber
 
     printfn $"Answer: %d{answer}"
+    printfn $"Part Two Answer: %d{partTwoAnswer}"
     0 // return an integer exit code
