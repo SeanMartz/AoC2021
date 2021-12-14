@@ -3,14 +3,14 @@
 open System.IO
 
 
-let rec dayPass (currentDay: int) (maxDays: int) (fish: list<int>) : List<int> =
+let rec dayPass (currentDay: int) (maxDays: int) (fish: seq<int>) : seq<int> =
     match currentDay.Equals maxDays with
     | true -> fish
     | _ ->
         dayPass (currentDay + 1) maxDays fish
-                                          |> List.map (fun f -> f - 1)
-                                          |> List.map (fun f -> if f = -1 then [ 8 ] @ [ 6 ] else [ f ])
-                                          |> List.concat
+                                          |> Seq.map (fun f -> f - 1)
+                                          |> Seq.map (fun f -> if f = -1 then [ 8 ] @ [ 6 ] else [ f ])
+                                          |> Seq.concat
 
 [<EntryPoint>]
 let main argv =
@@ -20,12 +20,11 @@ let main argv =
 
     let puzzleInput = File.ReadLines(fullPath) |> List.ofSeq
 
-    let lanternFish =
-        puzzleInput.Head.Split(",")
-        |> List.ofArray
-        |> List.map int
+    let lanternFish = (puzzleInput |> Seq.head).Split(",")
+                                                |> Seq.ofArray
+                                                |> Seq.map int
 
-    let newLanternFish = dayPass 0 80 lanternFish
+    let newLanternFish80 = dayPass 0 80 lanternFish
 
-    printfn $"Fish after 80 days %d{newLanternFish.Length}"
+    printfn $"Fish after 80 days %d{newLanternFish80 |> Seq.length}"
     0 // return an integer exit code
