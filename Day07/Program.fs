@@ -22,7 +22,8 @@ let rec determineDistancePartTwo (distances: list<int>) (positions: list<int>) (
         |> Map.add
             head
             (positions
-             |> List.map (fun pos -> [0..abs(head - pos)] |> List.sum)
+             //https://miniwebtool.com/sum-of-positive-integers-calculator/
+             |> List.map (fun pos -> abs(head - pos)  * (abs(head-pos) + 1) / 2 )
              |> List.map int64
              |> List.sum)
     | [] -> mapping
