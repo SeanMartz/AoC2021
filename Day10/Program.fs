@@ -12,7 +12,7 @@ let closesChunk char1 char2 : bool =
     | _ -> false
 
 
-let rec findInvalidCharacters stack (listOfChars: string list) : string option =
+let rec findInvalidCharacters stack (listOfChars: string list) : string list option =
     // if we have a characters left to parse
     //// if it's an opening character
     ////// add it to the stack, and keep parsing
@@ -33,8 +33,12 @@ let rec findInvalidCharacters stack (listOfChars: string list) : string option =
             if currentChar |> closesChunk stack.Head then
                 findInvalidCharacters stack.Tail restOfLine
             else
-                Some currentChar
-    | [] -> if stack.IsEmpty then None else Some ""
+                Some [ currentChar ]
+    | [] ->
+        if stack.IsEmpty then
+            None
+        else
+            Some stack
 
 [<EntryPoint>]
 let main argv =
@@ -46,24 +50,51 @@ let main argv =
         |> List.ofSeq
         |> List.map (fun x -> x |> List.ofSeq |> List.map string)
 
-    let corruptRows =
+    let invalidRows =
         data
         |> List.choose (fun row -> findInvalidCharacters [] row)
 
     let corruptChars =
-        corruptRows
-        |> List.filter (fun ltr -> ltr.Length > 0)
+        invalidRows
+        |> List.filter (fun ltrs -> ltrs.Length = 1)
+        |> List.map (fun ltrs -> ltrs.Head)
 
-    let pointValues =
+    let corruptPoints =
         Map [ (")", 3)
               ("]", 57)
               ("}", 1197)
               (">", 25137) ]
 
-    let points =
+    let corruptSum =
         corruptChars
-        |> List.map (fun badChar -> pointValues |> Map.find badChar)
+        |> List.map (fun badChar -> corruptPoints |> Map.find badChar)
         |> List.sum
 
-    printfn $"Answer %d{points}"
+    printfn $"Answer %d{corruptSum}"
+
+    let unfinishedPoints =
+        Map [ (")", bigint 1)
+              ("]", bigint 2)
+              ("}", bigint 3)
+              (">", bigint 4) ]
+
+    let swapClosingChars chr =
+        match chr with
+        | "(" -> ")"
+        | "[" -> "]"
+        | "{" -> "}"
+        | "<" -> ">"
+        
+    let scores =
+        invalidRows
+        |> List.filter (fun ltrs -> ltrs.Length > 1)
+        |> List.map (fun ltrs -> ltrs |> List.map swapClosingChars)
+        |> List.map (fun lst -> lst |> List.map (fun chr -> unfinishedPoints |> Map.find chr))
+        |> List.map (fun scores -> scores |> List.reduce(fun score pointValue -> (score * bigint 5) + pointValue))
+        |> List.sort
+        
+    let answer2 = scores.[scores.Length/2] 
+        
+    printfn $"Answer2 %A{answer2}"
+
     0 // return an integer exit code
