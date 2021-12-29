@@ -55,7 +55,7 @@ let rec handleFlashes totalFlashCount flashedAlready (octopusMap: OctopusMap) : 
             
             
 
-let rec takeStep currentStep totalFlashes (octopusMap: OctopusMap): Map<int, int> =
+let rec takeStep currentStep stopStep totalFlashes (octopusMap: OctopusMap): Map<int, int> =
     let newOctoMap, flashesThisStep =
         octopusMap
         //First, the energy level of each octopus increases by 1.
@@ -63,10 +63,10 @@ let rec takeStep currentStep totalFlashes (octopusMap: OctopusMap): Map<int, int
         //Then, any octopus with an energy level greater than 9 flashes.
         |> handleFlashes 0 Set.empty
         
-    if currentStep = 100 then
+    if currentStep > stopStep then
         totalFlashes
     else
-        takeStep (currentStep+1) (totalFlashes |> Map.add currentStep flashesThisStep) newOctoMap 
+        takeStep (currentStep+1) stopStep (totalFlashes |> Map.add currentStep flashesThisStep) newOctoMap 
     
 
 [<EntryPoint>]
@@ -91,13 +91,22 @@ let main argv =
         |> Map.ofList
         
         
-    let stepsAndFlashes = takeStep 0 Map.empty octopusMap
+    let stepsAndFlashes = takeStep 1 100 Map.empty octopusMap
     let answer = stepsAndFlashes
                  |> Map.toList
                  |> List.map(fun x -> snd x)
                  |> List.sum
                  
-    printf $"Answer: %d{answer}"
+    printfn $"Answer: %d{answer}"
+    
+    let part2 = takeStep 1 1000 Map.empty octopusMap
+
+    let answer2 =  part2
+                   |> Map.filter(fun x y -> y = 100)
+                   |> Map.toList
+                   |> List.head
+    
+    printfn $"Answer2: %d{fst answer2}"
 
 
     0 // return an integer exit code
