@@ -9,13 +9,25 @@ let isLower (st:string) =
     
 let appendNextPath (route:string) (connections: Map<string, string list>) =
     let routeParts = route.Split(",") |> List.ofArray
+    let has2LowerCaves =
+        routeParts
+        |> List.filter(fun r -> isLower r)
+        |> List.countBy id
+        |> List.exists(fun (_,count)-> count > 1)
+        
     let lastCave = routeParts |> List.last
     connections
     |> Map.find lastCave
+    |> List.filter(fun nextStep -> nextStep <> "start")
     |> List.map(fun nextStep ->if lastCave = "end"
                                 then route
-                                else if (routeParts |> List.contains nextStep) && isLower nextStep
-                                then "" else route+","+nextStep)
+                                else
+                                    // we can have one instance where we repeat a lower case
+                                    // after that you  can only enter lower case caves once
+                                    if
+                                       (has2LowerCaves)
+                                       && ((routeParts |> List.contains nextStep) && isLower nextStep)
+                                    then "" else route+","+nextStep)
     |> List.filter (fun x -> x <> "")
 
 let rec buildRoutesUntilAllEnd caveConnections knownRoutes  =
@@ -40,8 +52,8 @@ let main argv =
 
     let caveConnections =
         data
-        |> List.concat // flatten
-        |> List.distinct// get distinct
+        |> List.concat
+        |> List.distinct
         |> List.map(fun cave -> cave, data// return a tuple of all connections to this cave
                                       |> List.filter(fun con -> con |> List.contains cave)
                                       |> List.concat
@@ -53,5 +65,5 @@ let main argv =
     let routes = ["start"] |> buildRoutesUntilAllEnd caveConnections
                 
             
-    printfn "Hello world" 
+    printfn $"answer: %d{routes |> List.length}" 
     0 // return an integer exit code
